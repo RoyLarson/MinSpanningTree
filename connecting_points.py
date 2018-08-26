@@ -13,16 +13,15 @@ class Node:
 
 
 def convert_to_np_points(x, y):
-    points = np.array((x, y)).reshape(len(x), 2)
+    points = np.array([x, y]).transpose()
     return points
 
 
 def calculate_distances(points):
     # Equation of distance between two points
-    # sqrt(x^2-y^2) = sqrt(x^2 + y^2 - 2*x*y)
-    return np.sqrt((points**2).sum(axis=1)[:, None]
-                   + ((points**2).sum(axis=1)[None, :])
-                   - 2 * points.dot(points.transpose()))
+    # (x^2-y^2) = x^2 + y^2 - 2*x*y
+
+    return np.sqrt(np.einsum('ijk->ij', (points[:, None, :] - points)**2))
 
 
 def ravel_distances(distances):
@@ -33,8 +32,9 @@ def ravel_distances(distances):
 
 
 def sort_distances(ravel_dist):
-    sort_dist = ravel_dist[np.lexsort(([1, 0, 1]*ravel_dist).T)]
-    return sort_dist
+    sort_dist_inds = np.lexsort((ravel_dist[:, 0], ravel_dist[:, 2]))
+
+    return ravel_dist[sort_dist_inds, :]
 
 
 def is_valid_connection(node):
@@ -48,7 +48,7 @@ def minimum_distance(x, y):
     nodes = [Node(i) for i in range(len(x))]
     np_points = convert_to_np_points(x, y)
     distances = sort_distances(ravel_distances(calculate_distances(np_points)))
-    used = set()
+    used = set([distances[0][0]])
     total_distance = 0
     i = 0
     while len(used) < len(nodes):
