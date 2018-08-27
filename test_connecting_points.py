@@ -247,11 +247,11 @@ def test_min_distance_speed():
 
 
 if __name__ == '__main__':
-    make_and_save_data()
+#    make_and_save_data()
 
     #    test_distance()
     #    test_convert_to_points()
     #    test_ravel_distances()
     #    test_sort_points()
     #    test_minumum_distance()
-#    test_min_distance_speed()
+    test_min_distance_speed()

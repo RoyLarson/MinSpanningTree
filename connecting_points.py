@@ -1,6 +1,7 @@
 # Uses python3
 import sys
 import numpy as np
+import pandas as pd
 
 
 class Node:
@@ -45,6 +46,10 @@ def is_valid_connection(node):
 
 
 def calc_min_distance(nodes, distances):
+    excel = pd.ExcelWriter('data1.xlsx')
+    path = []
+    all_data = []
+    data = pd.DataFrame(0, index=range(len(nodes)), columns=range(len(nodes)))
     first_node = nodes[int(distances[0][0])]
     used = set([first_node])
     first_node.location = first_node
@@ -54,16 +59,47 @@ def calc_min_distance(nodes, distances):
         froms, tos, dist = distances[i]
         froms = int(froms)
         tos = int(tos)
+        row_of_all_data = [froms, tos, dist,
+                           nodes[froms].location, nodes[tos].location]
         if is_valid_connection(nodes[tos]):
+            if froms < tos:
+                path.append([froms, tos, dist])
+                data.iloc[froms, tos] = dist
+            else:
+                path.append([tos, froms, dist])
+                data.iloc[tos, froms] = dist
             nodes[tos].location = nodes[froms]
             used.add(nodes[tos])
+            row_of_all_data.extend([
+                nodes[froms].location, nodes[tos].location, True])
             total_distance += dist
         elif is_valid_connection(nodes[froms]):
+            if froms < tos:
+                path.append([froms, tos, dist])
+                data.iloc[froms, tos] = dist
+            else:
+                path.append([tos, froms, dist])
+                data.iloc[tos, froms] = dist
             nodes[froms].location = nodes[tos]
             used.add(nodes[froms])
             total_distance += dist
+            row_of_all_data.extend([
+                nodes[froms].location, nodes[tos].location, True])
+        else:
+            row_of_all_data.extend([
+                nodes[froms].location, nodes[tos].location, False])
 
         i += 1
+        all_data.append(row_of_all_data)
+    path = pd.DataFrame(path)
+    col_names = ['from', 'to', 'dist', 'start from.location',
+                 'start to.location', 'end from.location', 'end to.location', 'used']
+    all_data = pd.DataFrame(all_data, columns=col_names)
+    data.to_excel(excel, sheet_name='my path graph')
+    path.to_excel(excel, sheet_name='my path')
+    all_data.to_excel(excel, sheet_name='all data')
+    excel.save()
+    excel.close()
     return total_distance
 
 
