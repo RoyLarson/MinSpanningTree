@@ -1,4 +1,4 @@
-import connecting_points as cp
+import Min_Spaning_Tree as MST
 import numpy as np
 import pytest
 from random import randint
@@ -6,9 +6,19 @@ import time
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree
 import pandas as pd
+import logging
+import sys
+test_logger = logging.getLogger('test_logger')
+test_logger.setLevel(logging.CRITICAL)
+formatter = logging.Formatter('%(message)s')
+fh = logging.FileHandler('test_complete.log')
+fh.setFormatter(formatter)
+test_logger.addHandler(fh)
 
 
+@pytest.mark.timeout(10)
 def make_and_save_data():
+    test_logger.critical(sys._getframe().f_code.co_name)
     x_list = []
     y_list = []
     pairs = set()
@@ -23,17 +33,17 @@ def make_and_save_data():
     excel = pd.ExcelWriter('data.xlsx')
     data = pd.DataFrame(list(zip(x_list, y_list)), columns=['x', 'y'])
     data.to_excel(excel, sheet_name='points')
-    dist = cp.calculate_distances(data.values)
+    dist = MST.calculate_distances(data.values)
     dist_df = pd.DataFrame(np.tril(dist))
     dist_df.to_excel(excel, sheet_name='distances')
-    sort_dist = pd.DataFrame(cp.sort_distances(cp.ravel_distances(dist)))
+    sort_dist = pd.DataFrame(MST.sort_distances(MST.ravel_distances(dist)))
     sort_dist.to_excel(excel, sheet_name='sorted dist')
 
     csr = csr_matrix(np.triu(dist))
     csr_dict = csr.todok()
     csr_list = np.array([[nodes[0], nodes[1], distance]
                          for nodes, distance in csr_dict.items()])
-    sort_csr = pd.DataFrame(cp.sort_distances(csr_list))
+    sort_csr = pd.DataFrame(MST.sort_distances(csr_list))
     sort_csr.to_excel(excel, sheet_name='sorted csr')
 
     path = minimum_spanning_tree(csr)
@@ -42,9 +52,12 @@ def make_and_save_data():
 
     excel.save()
     print('SAVED DATA')
+    test_logger.critical(sys._getframe().f_code.co_name)
 
 
+@pytest.mark.timeout(10)
 def read_data():
+
     data = pd.read_excel('data.xlsx', indexcol=0,
                          header=0, sheet_name='points')
     x = data['x'].values
@@ -52,6 +65,7 @@ def read_data():
     return x, y
 
 
+@pytest.mark.timeout(10)
 def calc_dist_slow(points):
     answer = []
     for i_1, j_1 in points:
@@ -64,10 +78,12 @@ def calc_dist_slow(points):
     return np.array(answer)
 
 
+@pytest.mark.timeout(10)
 def test_convert_to_points():
+    test_logger.critical(sys._getframe().f_code.co_name)
     x = [0, 1, 2, 3, 4, 5]
     y = [6, 7, 8, 9, 10, 11]
-    points = cp.convert_to_np_points(x, y)
+    points = MST.convert_to_np_points(x, y)
     ans = np.array([[0, 6],
                     [1, 7],
                     [2, 8],
@@ -78,64 +94,70 @@ def test_convert_to_points():
 
     x = [0, 0, 1, 1]
     y = [0, 1, 0, 1]
-    points = cp.convert_to_np_points(x, y)
+    points = MST.convert_to_np_points(x, y)
     ans = np.array([[0, 0],
                     [0, 1],
                     [1, 0],
                     [1, 1]])
 
     assert points == pytest.approx(ans)
+    test_logger.critical(sys._getframe().f_code.co_name)
 
 
+@pytest.mark.timeout(10)
 def test_distance():
+    test_logger.critical(sys._getframe().f_code.co_name)
     x = [0, 1]
     y = [1, 0]
-    points = cp.convert_to_np_points(x, y)
+    points = MST.convert_to_np_points(x, y)
     ans = calc_dist_slow(points)
-    dist = cp.calculate_distances(points)
+    dist = MST.calculate_distances(points)
     assert dist == pytest.approx(ans)
 
     x = [0, 1, 2]
     y = [0, 1, 2]
-    points = cp.convert_to_np_points(x, y)
+    points = MST.convert_to_np_points(x, y)
     ans = calc_dist_slow(points)
-    dist = cp.calculate_distances(points)
+    dist = MST.calculate_distances(points)
     assert dist == pytest.approx(ans)
 
     x = [0, 0, 1, 1]
     y = [0, 1, 0, 1]
-    points = cp.convert_to_np_points(x, y)
+    points = MST.convert_to_np_points(x, y)
     ans = calc_dist_slow(points)
-    dist = cp.calculate_distances(points)
+    dist = MST.calculate_distances(points)
     assert dist == pytest.approx(ans)
 
     x = [0, 0, 1, 3, 3]
     y = [0, 2, 1, 0, 2]
-    points = cp.convert_to_np_points(x, y)
+    points = MST.convert_to_np_points(x, y)
     ans = calc_dist_slow(points)
-    dist = cp.calculate_distances(points)
+    dist = MST.calculate_distances(points)
     assert dist == pytest.approx(ans)
+    test_logger.critical(sys._getframe().f_code.co_name)
 
 
+@pytest.mark.timeout(10)
 def test_ravel_distances():
+    test_logger.critical(sys._getframe().f_code.co_name)
     x = [0, 1, 2]
     y = [0, 1, 2]
-    points = cp.convert_to_np_points(x, y)
-    dist = cp.calculate_distances(points)
+    points = MST.convert_to_np_points(x, y)
+    dist = MST.calculate_distances(points)
 
     answer = [[0, 1, dist[0, 1]],
               [0, 2, dist[0, 2]],
               [1, 2, dist[1, 2]]]
 
     answer = np.array(answer)
-    dist = cp.ravel_distances(dist)
+    dist = MST.ravel_distances(dist)
 
     assert dist == pytest.approx(answer)
 
     x = [0, 0, 1, 1]
     y = [0, 1, 0, 1]
-    points = cp.convert_to_np_points(x, y)
-    dist = cp.calculate_distances(points)
+    points = MST.convert_to_np_points(x, y)
+    dist = MST.calculate_distances(points)
     answer = np.array([[0, 1, dist[0, 1]],
                        [0, 2, dist[0, 2]],
                        [0, 3, dist[0, 3]],
@@ -143,14 +165,14 @@ def test_ravel_distances():
                        [1, 3, dist[1, 3]],
                        [2, 3, dist[2, 3]]])
 
-    dist = cp.ravel_distances(dist)
+    dist = MST.ravel_distances(dist)
 
     assert dist == pytest.approx(answer)
 
     x = [0, 0, 1, 3, 3]
     y = [0, 2, 1, 0, 2]
-    points = cp.convert_to_np_points(x, y)
-    dist = cp.calculate_distances(points)
+    points = MST.convert_to_np_points(x, y)
+    dist = MST.calculate_distances(points)
     answer = np.array([[0, 1, dist[0, 1]],
                        [0, 2, dist[0, 2]],
                        [0, 3, dist[0, 3]],
@@ -161,20 +183,19 @@ def test_ravel_distances():
                        [2, 3, dist[2, 3]],
                        [2, 4, dist[2, 4]],
                        [3, 4, dist[3, 4]]])
-    dist = cp.ravel_distances(dist)
+    dist = MST.ravel_distances(dist)
     assert dist == pytest.approx(answer)
+    test_logger.critical(sys._getframe().f_code.co_name)
 
 
-def test_calc_min_distance():
-    nodes = [cp.Node(i) for i in range(3)]
-
-
+@pytest.mark.timeout(10)
 def test_sort_points():
+    test_logger.critical(sys._getframe().f_code.co_name)
     x = [0, 1, 2]
     y = [0, 1, 2]
-    points = cp.convert_to_np_points(x, y)
-    dist = cp.calculate_distances(points)
-    sort = cp.sort_distances(cp.ravel_distances(dist))
+    points = MST.convert_to_np_points(x, y)
+    dist = MST.calculate_distances(points)
+    sort = MST.sort_distances(MST.ravel_distances(dist))
     answer = np.array([[0.,         1.,         1.41421356],
                        [1.,         2.,         1.41421356],
                        [0.,         2.,         2.82842712]])
@@ -182,9 +203,9 @@ def test_sort_points():
 
     x = [0, 0, 1, 1]
     y = [0, 1, 0, 1]
-    points = cp.convert_to_np_points(x, y)
-    dist = cp.sort_distances(cp.ravel_distances(
-        cp.calculate_distances(points)))
+    points = MST.convert_to_np_points(x, y)
+    dist = MST.sort_distances(MST.ravel_distances(
+        MST.calculate_distances(points)))
     answer = np.array([[0, 1, 1],
                        [0, 2, 1],
                        [1, 3, 1],
@@ -196,58 +217,112 @@ def test_sort_points():
 
     x = [0, 0, 1, 3, 3]
     y = [0, 2, 1, 0, 2]
-    points = cp.convert_to_np_points(x, y)
-    dist = cp.calculate_distances(points)
-    dist = cp.ravel_distances(dist)
-    dist = cp.sort_distances(dist)
+    points = MST.convert_to_np_points(x, y)
+    dist = MST.calculate_distances(points)
+    dist = MST.ravel_distances(dist)
+    dist = MST.sort_distances(dist)
+    test_logger.critical('test_sort_points')
+    test_logger.critical(sys._getframe().f_code.co_name)
 
 
+@pytest.mark.timeout(10)
 def test_node():
-    node = cp.Node(0)
+    test_logger.critical(sys._getframe().f_code.co_name)
+    node = MST.Node(0)
     assert node
     assert node.num == 0
-    assert not node.location
+    assert node.location == node
+    test_logger.critical(sys._getframe().f_code.co_name)
 
 
+@pytest.mark.timeout(10)
+def test_add_and_relocate():
+    test_logger.critical(sys._getframe().f_code.co_name)
+    node_1 = MST.Node(0)
+    node_2 = MST.Node(1)
+    node_3 = MST.Node(2)
+    node_4 = MST.Node(3)
+
+    node_1.add_and_relocate_nodes(node_2)
+    assert node_2.location == node_1
+    assert node_2 in node_1.connected_nodes
+
+    node_3.add_and_relocate_nodes(node_4)
+    node_2.add_and_relocate_nodes(node_4)
+    assert node_3.location == node_1
+    assert node_4.location == node_1
+    assert node_2.location == node_1
+    assert node_3 in node_1.connected_nodes
+    assert node_4 in node_1.connected_nodes
+
+    node_1 = MST.Node(0)
+    node_2 = MST.Node(1)
+    node_3 = MST.Node(2)
+    node_4 = MST.Node(3)
+
+    node_1.add_and_relocate_nodes(node_2)
+    assert node_2.location == node_1
+    assert node_2 in node_1.connected_nodes
+
+    node_3.add_and_relocate_nodes(node_4)
+    node_3.add_and_relocate_nodes(node_1)
+    assert node_1.location == node_3
+    assert node_4.location == node_3
+    assert node_2.location == node_3
+    assert node_1 in node_3.connected_nodes
+    assert node_4 in node_3.connected_nodes
+    assert node_2 in node_3.connected_nodes
+    test_logger.critical(sys._getframe().f_code.co_name)
+
+
+@pytest.mark.timeout(10)
 def test_is_valid_connection():
+    test_logger.critical(sys._getframe().f_code.co_name)
+    node_1 = MST.Node(0)
+    node_2 = MST.Node(1)
+    MST.is_valid_connection(node_1, node_2)
 
-    node_1 = cp.Node(0)
-    assert cp.is_valid_connection(node_1)
-
-    node_2 = cp.Node(1)
-    node_2.location = node_1
-    assert not cp.is_valid_connection(node_2)
+    node_1.add_and_relocate_nodes(node_2)
+    assert not MST.is_valid_connection(node_2)
+    assert node_2.location == node_1
+    test_logger.critical(sys._getframe().f_code.co_name)
 
 
-def test_minumum_distance():
+@pytest.mark.timeout(10)
+def test_minimum_distance():
+    test_logger.critical(sys._getframe().f_code.co_name)
     test_1_x = [0, 0, 1, 1]
     test_1_y = [0, 1, 0, 1]
-    assert cp.minimum_distance(
+    assert MST.minimum_distance(
         test_1_x, test_1_y) == pytest.approx(3.0, rel=1e-7)
 
     test_2_x = [0, 0, 1, 3, 3]
     test_2_y = [0, 2, 1, 0, 2]
-    assert cp.minimum_distance(
+    assert MST.minimum_distance(
         test_2_x, test_2_y) == pytest.approx(7.064495102, rel=1e-7)
+    test_logger.critical(sys._getframe().f_code.co_name)
 
 
+@pytest.mark.timeout(10)
 def test_min_distance_speed():
+    test_logger.critical(sys._getframe().f_code.co_name)
     x_list, y_list = read_data()
     start = time.time()
-    my_dist = cp.minimum_distance(x_list, y_list)
+    my_dist = MST.minimum_distance(x_list, y_list)
     finished = time.time()
 
     assert finished-start < 10
-    points = cp.convert_to_np_points(x_list, y_list)
-    dist = cp.calculate_distances(points)
+    points = MST.convert_to_np_points(x_list, y_list)
+    dist = MST.calculate_distances(points)
     dist = csr_matrix(np.triu(dist))
 
     Tcsr = minimum_spanning_tree(dist)
     assert my_dist == pytest.approx(Tcsr.toarray().sum())
+    test_logger.critical(sys._getframe().f_code.co_name)
 
 
 if __name__ == '__main__':
-#    make_and_save_data()
+    #    make_and_save_data()
 
     #    test_distance()
     #    test_convert_to_points()
