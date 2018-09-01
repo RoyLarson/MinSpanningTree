@@ -79,6 +79,8 @@ def calc_min_distance(nodes, distances):
 
 
 def minimum_distance(x, y):
+    if len(x) == 1:
+        return 0
     nodes = [Node(i) for i in range(len(x))]
     np_points = convert_to_np_points(x, y)
     distances = sort_distances(ravel_distances(calculate_distances(np_points)))
