@@ -1,9 +1,6 @@
 # Uses python3
 import sys
 import numpy as np
-import logging
-logging.basicConfig(level=logging.CRITICAL,
-                    format='%(message)s', filename='debug.log')
 
 
 class Node:
@@ -16,11 +13,10 @@ class Node:
         return 'Node({})'.format(self.num)
 
     def add_and_relocate_nodes(self, from_node):
-        logging.critical(
-            f'This Node:{self}\nConnecting Node:{from_node}\nLocation:{self.location}\nConnected Nodes:{self.location.connected_nodes}')
-        self.location.connected_nodes.update(from_node.connected_nodes)
-        for node in from_node.connected_nodes:
-            node.location = self
+        self.location.connected_nodes.update(
+            from_node.location.connected_nodes)
+        for node in from_node.location.connected_nodes:
+            node.location = self.location
 
 
 def convert_to_np_points(x, y):
@@ -43,15 +39,16 @@ def ravel_distances(distances):
 
 def sort_distances(ravel_dist):
     sort_dist_inds = np.lexsort((ravel_dist[:, 0], ravel_dist[:, 2]))
-
     return ravel_dist[sort_dist_inds, :]
 
 
 def connect_nodes(node_one, node_two):
-    if len(node_one.location.connected_nodes) >=\
-            len(node_two.location.connected_nodes):
+    """
+    connects nodes so that all of the nodes 
+    will end up at Node(0)
+    """
+    if node_one.location.num < node_two.location.num:
         node_one.location.add_and_relocate_nodes(node_two)
-
     else:
         node_two.location.add_and_relocate_nodes(node_one)
 
@@ -64,11 +61,10 @@ def is_valid_connection(node_one, node_two):
 
 
 def calc_min_distance(nodes, distances):
-    first_node = nodes[int(distances[0][0])]
+    final_target_node = nodes[0]
     total_distance = 0
     i = 0
-    used = set([first_node])
-    while len(used) < len(nodes):
+    while len(final_target_node.connected_nodes) < len(nodes):
         node_one_i, node_two_i, dist = distances[i]
         node_one = nodes[int(node_one_i)]
         node_two = nodes[int(node_two_i)]
@@ -76,8 +72,8 @@ def calc_min_distance(nodes, distances):
         if is_valid_connection(node_one, node_two):
             connect_nodes(node_one, node_two)
             total_distance += dist
-            used.add(node_one)
-            used.add(node_two)
+
+        i += 1
 
     return total_distance
 

@@ -16,6 +16,8 @@ scipy = "*"
 pandas = "*"
 xlrd = "*"
 pytest-timeout = "*"
+bugjar = "*"
+openpyxl = "*"
 
 [requires]
 python_version = "3.6"
